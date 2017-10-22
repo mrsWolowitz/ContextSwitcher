@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -17,14 +18,34 @@ namespace ContextSwitcherActions
 
         public Class1(string dbPath, string issue)
         {
-            DBPath = dbPath;
+			//TODO validate input parameters
+			DBPath = dbPath;
             Issue = issue;
         }
 
         public void RestoreDB()
         {
-            //string connectionString = 
-        }
+			string DBNameString = $"on_{Issue}";
+            string ConnectionString = $"Data Source= msk-sql-1; Initial Catalog ={DBNameString}; Integrated Security = true;;";
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				string sqlQuery = @"RESTORE FILELISTONLY FROM DISK = @DBPath";
+				connection.Open();
+				using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+				{
+					cmd.CommandType = System.Data.CommandType.Text;
+					cmd.Parameters.AddWithValue("@DBPath", DBPath);
+					using (SqlDataReader reader = cmd.ExecuteReader())
+					{
+						Tuple<string, string> fileList = new Tuple<string, string>();
+					}
+				}
+			}
+
+			DBName = DBNameString;
+
+		}
 
         public void GetVersion()
         { }
@@ -46,7 +67,7 @@ namespace ContextSwitcherActions
             connectionStrings.RemoveNodes();
             XElement projectx = new XElement("add",
                 new XAttribute("name", "ProjectX"),
-                new XAttribute("providerName", "System.Data.SqlClietnt"),
+                new XAttribute("providerName", "System.Data.SqlClient"),
                 new XAttribute("connectionStrings", $"Data Source= msk-sql-1; Initial Catalog ={DBName}; Integrated Security = true;;"));
             connectionStrings.Add(projectx);
 
